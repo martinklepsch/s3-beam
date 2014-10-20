@@ -49,6 +49,6 @@
 (defn s3-sign [bucket access-key secret-key]
   (fn [request]
     {:status 200
-     :body   (pr-str (s3d/sign-upload (:params request) {:bucket bucket
-                                                         :aws-access-key access-key
-                                                         :aws-secret-key secret-key}))}))
+     :body   (pr-str (sign-upload (:params request) {:bucket bucket
+                                                     :aws-access-key access-key
+                                                     :aws-secret-key secret-key}))}))
