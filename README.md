@@ -3,7 +3,9 @@
 `s3-beam` is a Clojure/Clojurescript library designed to help you upload files
 from the browser to S3 (CORS upload).
 
-[![Clojars Project](http://clojars.org/org.martinklepsch/s3-beam/latest-version.svg)]
+```clj
+[org.martinklepsch/s3-beam "0.1.0"]
+```
 
 ## Usage
 
@@ -26,18 +28,20 @@ Please follow Amazon's [official documentation](http://docs.aws.amazon.com/Amazo
 
 ### 2. Plug-in the route to sign uploads
 
-    (ns your.server
-      (:require [s3-beam.handler :as s3b]
-                [compojure.core :refer [GET defroutes]]
-                [compojure.route :refer [resources]])
+```clj
+(ns your.server
+  (:require [s3-beam.handler :as s3b]
+            [compojure.core :refer [GET defroutes]]
+            [compojure.route :refer [resources]]))
 
-    (def bucket "your-bucket")
-    (def access-key "your-aws-access-key")
-    (def secret-key "your-aws-secret-key")
+(def bucket "your-bucket")
+(def access-key "your-aws-access-key")
+(def secret-key "your-aws-secret-key")
 
-    (defroutes routes
-      (resources "/")
-      (GET "/sign" {params :params} (s3b/s3-sign bucket access-key secret-key)))
+(defroutes routes
+  (resources "/")
+  (GET "/sign" {params :params} (s3b/s3-sign bucket access-key secret-key)))
+```
 
 **NOTE: for now the only supported route to sign uploads is `/sign`. In a future
 release this will be customizable.**
@@ -50,24 +54,26 @@ that should get uploaded.
 
 An example using it within an Om component:
 
-    (defcomponent upload-form [app-state owner]
-      (init-state [_]
-        (let [uploaded (chan 20)]
-          {:dropped-queue (chan 20)
-           :upload-queue (s3/s3-pipe uploaded)
-           :uploaded uploaded
-           :uploads []}))
-      (did-mount [_]
-        (listen-file-drop js/document (om/get-state owner :dropped-queue))
-        (go (while true
-              (let [{:keys [dropped-queue upload-queue uploaded uploads]} (om/get-state owner)]
-                (let [[v ch] (alts! [dropped-queue uploaded])]
-                  (cond
-                   (= ch dropped-queue) (put! upload-queue v)
-                   (= ch uploaded) (om/set-state! owner :uploads (conj uploads v))))))))
-      (render-state [this state]
-        ; ....
-        )
+```clj
+(defcomponent upload-form [app-state owner]
+  (init-state [_]
+    (let [uploaded (chan 20)]
+      {:dropped-queue (chan 20)
+       :upload-queue (s3/s3-pipe uploaded)
+       :uploaded uploaded
+       :uploads []}))
+  (did-mount [_]
+    (listen-file-drop js/document (om/get-state owner :dropped-queue))
+    (go (while true
+          (let [{:keys [dropped-queue upload-queue uploaded uploads]} (om/get-state owner)]
+            (let [[v ch] (alts! [dropped-queue uploaded])]
+              (cond
+               (= ch dropped-queue) (put! upload-queue v)
+               (= ch uploaded) (om/set-state! owner :uploads (conj uploads v))))))))
+  (render-state [this state]
+    ; ....
+    )
+```
 
 ## Contributing
 
