@@ -10,7 +10,7 @@
    :type (.-type f)
    :size (.-size f)})
 
-(defn signing-url [route fname fmime]
+(defn signing-url [fname fmime]
  (str "/sign?file-name=" fname "&mime-type=" fmime))
 
 (defn sign-file [file ch]
