@@ -15,12 +15,12 @@
 (defn policy
   "Generate policy for upload of `key` with `mime-type` to be uploaded
   within optional `expiration-window` (defaults to 60)."
-  ([key mime-type]
-     (policy key mime-type 60))
-  ([key mime-type expiration-window]
+  ([bucket key mime-type]
+     (policy bucket key mime-type 60))
+  ([bucket key mime-type expiration-window]
      (ring.util.codec/base64-encode
       (.getBytes (json/write-str { "expiration" (now-plus expiration-window)
-                                   "conditions" [{"bucket" s3-bucket}
+                                   "conditions" [{"bucket" bucket}
                                                  {"acl" "public-read"}
                                                  ["starts-with" "$Content-Type" mime-type]
                                                  ["starts-with" "$key" key]
@@ -36,7 +36,7 @@
 
 (defn sign-upload [{:keys [file-name mime-type]}
                    {:keys [bucket aws-access-key aws-secret-key]}]
-  (let [p (policy file-name mime-type)]
+  (let [p (policy bucket file-name mime-type)]
     {:action (str "https://" bucket ".s3-eu-west-1.amazonaws.com/")
      :key    file-name
      :Content-Type mime-type
