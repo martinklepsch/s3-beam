@@ -12,4 +12,5 @@
                  ;[com.google.javascript/closure-compiler "v20140814"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]]
 
-  :plugins      [[lein-cljsbuild "1.0.3"]])
+  :scm {:name "git"
+         :url "https://github.com/martinklepsch/s3-beam"})
