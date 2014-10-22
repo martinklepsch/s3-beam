@@ -41,9 +41,8 @@
      form-data)))
 
 (defn s3-pipe [report-chan]
-  (let [to-process (chan 20)
-        signed     (chan 20)
-        uploaded   (chan 20)]
+  (let [to-process (chan)
+        signed     (chan)]
     (pipeline-async 3 signed sign-file to-process)
     (pipeline-async 3 report-chan upload-file signed)
     to-process))
