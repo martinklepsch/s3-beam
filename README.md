@@ -80,7 +80,7 @@ An example using it within an Om component:
 
 #### 0.2.0
 
-- Allow passing of `aws-zone` parameter to `s3-sign` handler function.
+- Allow passing of `aws-zone` parameter to `s3-sign` handler function. ([b880736](https://github.com/martinklepsch/s3-beam/commit/b88073646b7c92b5493a168ce25d27feaa130c9e))
 
 ## Contributing
 
