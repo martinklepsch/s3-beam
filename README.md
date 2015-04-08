@@ -35,12 +35,13 @@ Please follow Amazon's [official documentation](http://docs.aws.amazon.com/Amazo
             [compojure.route :refer [resources]]))
 
 (def bucket "your-bucket")
+(def aws-zone "s3-eu-west-1")
 (def access-key "your-aws-access-key")
 (def secret-key "your-aws-secret-key")
 
 (defroutes routes
   (resources "/")
-  (GET "/sign" {params :params} (s3b/s3-sign bucket access-key secret-key)))
+  (GET "/sign" {params :params} (s3b/s3-sign bucket aws-zone access-key secret-key)))
 ```
 
 **NOTE: for now the only supported route to sign uploads is `/sign`. In a future
@@ -74,6 +75,12 @@ An example using it within an Om component:
     ; ....
     )
 ```
+
+## Changes
+
+#### 0.2.0
+
+- Allow passing of `aws-zone` parameter to `s3-sign` handler function.
 
 ## Contributing
 

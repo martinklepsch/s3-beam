@@ -35,9 +35,9 @@
              (.getBytes string "UTF-8"))))
 
 (defn sign-upload [{:keys [file-name mime-type]}
-                   {:keys [bucket aws-access-key aws-secret-key]}]
+                   {:keys [bucket aws-zone aws-access-key aws-secret-key]}]
   (let [p (policy bucket file-name mime-type)]
-    {:action (str "https://" bucket ".s3-eu-west-1.amazonaws.com/")
+    {:action (str "https://" bucket "." aws-zone ".amazonaws.com/")
      :key    file-name
      :Content-Type mime-type
      :policy p
@@ -46,9 +46,10 @@
      :AWSAccessKeyId aws-access-key
      :signature (hmac-sha1 aws-secret-key p)}))
 
-(defn s3-sign [bucket access-key secret-key]
+(defn s3-sign [bucket aws-zone access-key secret-key]
   (fn [request]
     {:status 200
      :body   (pr-str (sign-upload (:params request) {:bucket bucket
+                                                     :aws-zone aws-zone
                                                      :aws-access-key access-key
                                                      :aws-secret-key secret-key}))}))
