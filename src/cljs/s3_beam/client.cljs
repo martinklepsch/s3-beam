@@ -34,7 +34,7 @@
     (xhr/send
      (:action (:signature upload-info))
      (fn [res]
-       (let [loc (first (.getElementsByTagName (.getResponseXml (.-target res)) "Location"))]
+       (let [loc (aget (.getElementsByTagName (.getResponseXml (.-target res)) "Location") 0)]
          (put! ch (gdom/getTextContent loc))
          (close! ch)))
      "POST"
