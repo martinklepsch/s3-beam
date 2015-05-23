@@ -44,14 +44,19 @@ Please follow Amazon's [official documentation](http://docs.aws.amazon.com/Amazo
   (GET "/sign" {params :params} (s3b/s3-sign bucket aws-zone access-key secret-key)))
 ```
 
-**NOTE: for now the only supported route to sign uploads is `/sign`. In a future
-release this will be customizable.**
+If you want to use a route different than `/sign`, define it in the
+handler, `(GET "/my-cool-route" ...)`, and then pass it in the options
+map to `s3-pipe` in the frontend.
 
 ### 3. Integrate the upload pipeline into your frontend
 
-In your frontend code you can now use `s3-beam.client/s3-pipe`. `s3-pipe`'s argument is a channel
-where completed uploads will be reported. The function returns a channel where you can put File objects
-that should get uploaded.
+In your frontend code you can now use `s3-beam.client/s3-pipe`.
+`s3-pipe`'s argument is a channel where completed uploads will be
+reported. The function returns a channel where you can put File
+objects that should get uploaded. It might also take an extra options
+map with the previously mentioned `:server-url` like so:
+
+    (s3/s3-pipe uploaded {:server-url "/my-cool-route"})
 
 An example using it within an Om component:
 
