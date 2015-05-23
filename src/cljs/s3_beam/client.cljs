@@ -31,16 +31,33 @@
       (.append fd (name k) v))
     fd))
 
-(defn upload-file [upload-info ch]
+(defn xml->clj
+  "Transforms a shallow XML document into an idiomatic clj map"
+  [xml]
+  (let [kv (->> (array-seq (.. xml -firstChild -childNodes))
+                (map (fn [n] [(.toLowerCase (.-nodeName n))
+                             (gdom/getTextContent n)])))]
+    (zipmap (map (comp keyword first) kv) (map second kv))))
+
+(defn upload-file
+  "Uploads the file given by upload-info and puts the file and
+  upload response in the ch. Contains the following keys:
+    :file - the File Object that was uploaded
+    :response - S3 file data
+      :key
+      :location
+      :bucket
+      :etag"
+  [upload-info ch]
   (let [sig-fields [:key :Content-Type :success_action_status :policy :AWSAccessKeyId :signature :acl]
         signature  (select-keys (:signature upload-info) sig-fields)
         form-data  (formdata-from-map (merge signature {:file (:f upload-info)}))]
     (xhr/send
      (:action (:signature upload-info))
      (fn [res]
-       (let [loc (aget (.getElementsByTagName (.getResponseXml (.-target res)) "Location") 0)]
-         (put! ch (gdom/getTextContent loc))
-         (close! ch)))
+       (put! ch {:file (:f upload-info)
+                 :response (xml->clj (.. res -target getResponseXml))})
+       (close! ch))
      "POST"
      form-data)))
 

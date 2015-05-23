@@ -81,7 +81,20 @@ An example using it within an Om component:
     )
 ```
 
+The `uploaded` channel will return a map with the `:file` object that
+was uploaded and a `:response` map that contains the `:location`,
+`:bucket`, `:key`, and `:etag` of the file in S3. 
+
 ## Changes
+
+#### Not Released
+
+- Added `:key-fn` option `s3-beam.handler/sign-upload` to generate
+  custom S3 keys from `file-name` and `mime-type`.
+
+#### 0.3.0
+
+- Added custom `/sign` route. ([1cb9b2](https://github.com/martinklepsch/s3-beam/commit/1cb9b2703691e172e275a95490b3fc8209dfa409))
 
 #### 0.2.0
 
