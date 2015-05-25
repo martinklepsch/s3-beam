@@ -4,7 +4,7 @@
 from the browser to S3 (CORS upload).
 
 ```clj
-[org.martinklepsch/s3-beam "0.2.1"]
+[org.martinklepsch/s3-beam "0.3.0"]
 ```
 
 ## Usage
@@ -83,9 +83,15 @@ An example using it within an Om component:
 
 ## Changes
 
+#### 0.3.0
+
+-  Allow customization of server-side endpoint ([1cb9b27](https://github.com/martinklepsch/s3-beam/commit/1cb9b2703691e172e275a95490b3fc8209dfa409))
+
+        (s3/s3-pipe uploaded {:server-url "/my-cool-route"})
+
 #### 0.2.0
 
-- Allow passing of `aws-zone` parameter to `s3-sign` handler function. ([b880736](https://github.com/martinklepsch/s3-beam/commit/b88073646b7c92b5493a168ce25d27feaa130c9e))
+- Allow passing of `aws-zone` parameter to `s3-sign` handler function ([b880736](https://github.com/martinklepsch/s3-beam/commit/b88073646b7c92b5493a168ce25d27feaa130c9e))
 
 ## Contributing
 
