@@ -34,17 +34,34 @@
                (.init (javax.crypto.spec.SecretKeySpec. (.getBytes key) "HmacSHA1")))
              (.getBytes string "UTF-8"))))
 
-(defn sign-upload [{:keys [file-name mime-type]}
-                   {:keys [bucket aws-zone aws-access-key aws-secret-key]}]
-  (let [p (policy bucket file-name mime-type)]
-    {:action (str "https://" bucket "." aws-zone ".amazonaws.com/")
-     :key    file-name
-     :Content-Type mime-type
-     :policy p
-     :acl    "public-read"
-     :success_action_status "201"
-     :AWSAccessKeyId aws-access-key
-     :signature (hmac-sha1 aws-secret-key p)}))
+(defn sign-upload
+  "Takes the request's params {:file-name :mime-type} and
+  the aws-config {:bucket, :aws-zone, :aws-access-key, :aws-secret-key}
+  to produce a map with all the data needed to upload to s3.
+  May take an extra opts map with:
+   :key-fn - A fn (ifn?) that takes the request params {:file-name :mime-type}
+             and returns the key for S3 (i.e. hash of the file-name, UUID, etc.).
+             It should be side-effect free and return a string. 
+             Defaults to the :file-name keyword."
+  ([params aws-config] (sign-upload params aws-config {:key-fn :file-name}))
+  ([{:keys [file-name mime-type] :as params}
+    {:keys [bucket aws-zone aws-access-key aws-secret-key]}
+    {:keys [key-fn]}]
+   {:pre [(ifn? key-fn)]}
+   (let [key (key-fn params)]
+     (assert (string? key)
+       (str "The given :key-fn returned " key " with type " (type key)
+         " when given file-name: " file-name
+         " and mime-type: " mime-type ". It should return a string."))
+     (let [p (policy bucket key mime-type)]
+       {:action (str "https://" bucket "." aws-zone ".amazonaws.com/")
+        :key    key 
+        :Content-Type mime-type
+        :policy p
+        :acl    "public-read"
+        :success_action_status "201"
+        :AWSAccessKeyId aws-access-key
+        :signature (hmac-sha1 aws-secret-key p)}))))
 
 (defn s3-sign [bucket aws-zone access-key secret-key]
   (fn [request]
