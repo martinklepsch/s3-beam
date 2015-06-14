@@ -34,10 +34,23 @@
                (.init (javax.crypto.spec.SecretKeySpec. (.getBytes key) "HmacSHA1")))
              (.getBytes string "UTF-8"))))
 
+(def zone->endpoint
+  "Mapping of AWS zones to S3 endpoints as documented here:
+   http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region"
+  {"us-east-1"      "s3"
+   "us-west-1"      "s3-us-west-1"
+   "us-west-2"      "s3-us-west-2"
+   "eu-west-1"      "s3-eu-west-1"
+   "eu-central-1"   "s3-eu-central-1"
+   "ap-southeast-1" "s3-ap-southeast-1"
+   "ap-southeast-2" "s3-ap-southeast-2"
+   "ap-northeast-1" "s3-ap-northeast-1"
+   "sa-east-1"      "s3-sa-east-1"})
+
 (defn sign-upload [{:keys [file-name mime-type]}
                    {:keys [bucket aws-zone aws-access-key aws-secret-key]}]
   (let [p (policy bucket file-name mime-type)]
-    {:action (str "https://" bucket "." aws-zone ".amazonaws.com/")
+    {:action (str "https://" bucket "." (zone->endpoint aws-zone) ".amazonaws.com/")
      :key    file-name
      :Content-Type mime-type
      :policy p
