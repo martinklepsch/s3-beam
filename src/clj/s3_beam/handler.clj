@@ -49,6 +49,7 @@
 
 (defn sign-upload [{:keys [file-name mime-type]}
                    {:keys [bucket aws-zone aws-access-key aws-secret-key]}]
+  (assert (zone->endpoint aws-zone) "No endpoint found for given AWS Zone")
   (let [p (policy bucket file-name mime-type)]
     {:action (str "https://" bucket "." (zone->endpoint aws-zone) ".amazonaws.com/")
      :key    file-name
