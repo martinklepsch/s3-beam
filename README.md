@@ -98,7 +98,6 @@ An example using it within an Om component:
 Pull requests and issues are welcome. There are a few things I'd like to improve:
 
 * **Testing:** currently there are no tests
-* **Custom route:** allow use of other routes than `/sign`
 * **Error handling:** what happens when the request fails?
 * **Upload progress:** XhrIo supports `PROGRESS` events and especially
   for larger uploads it'd be nice to have them
