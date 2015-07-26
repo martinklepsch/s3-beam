@@ -83,6 +83,10 @@ An example using it within an Om component:
 
 ## Changes
 
+#### 0.3.1
+
+- Correctly look up endpoints given a zone parameter ([#10](https://github.com/martinklepsch/s3-beam/pull/10/files))
+
 #### 0.3.0
 
 -  Allow customization of server-side endpoint ([1cb9b27](https://github.com/martinklepsch/s3-beam/commit/1cb9b2703691e172e275a95490b3fc8209dfa409))
