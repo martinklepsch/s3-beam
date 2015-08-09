@@ -47,7 +47,7 @@
 (defn s3-pipe
   "Takes a channel where completed uploads will be reported and 
   returns a channel where you can put File objects that should get uploaded.
-  May also take an optiosn map with:
+  May also take an options map with:
     :server-url - the sign server url, defaults to \"/sign\""
   ([report-chan] (s3-pipe report-chan {:server-url "/sign"}))
   ([report-chan opts]
