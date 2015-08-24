@@ -47,23 +47,32 @@
    "ap-northeast-1" "s3-ap-northeast-1"
    "sa-east-1"      "s3-sa-east-1"})
 
-(defn sign-upload [{:keys [file-name mime-type]}
-                   {:keys [bucket aws-zone aws-access-key aws-secret-key]}]
-  (assert (zone->endpoint aws-zone) "No endpoint found for given AWS Zone")
-  (let [p (policy bucket file-name mime-type)]
-    {:action (str "https://" bucket "." (zone->endpoint aws-zone) ".amazonaws.com/")
-     :key    file-name
-     :Content-Type mime-type
-     :policy p
-     :acl    "public-read"
-     :success_action_status "201"
-     :AWSAccessKeyId aws-access-key
-     :signature (hmac-sha1 aws-secret-key p)}))
-
-(defn s3-sign [bucket aws-zone access-key secret-key]
-  (fn [request]
-    {:status 200
-     :body   (pr-str (sign-upload (:params request) {:bucket bucket
-                                                     :aws-zone aws-zone
-                                                     :aws-access-key access-key
-                                                     :aws-secret-key secret-key}))}))
+(defn sign-upload
+  "Takes the request's params {:file-name :mime-type} and
+  the aws-config {:bucket, :aws-zone, :aws-access-key, :aws-secret-key}
+  to produce a map with all the data needed to upload to s3.
+  May take an extra opts map with:
+  :key-fn - A fn (ifn?) that takes the request params {:file-name :mime-type}
+  and returns the key for S3 (i.e. hash of the file-name, UUID, etc.).
+  It should be side-effect free and return a string.
+  Defaults to the :file-name keyword."
+  ([params aws-config] (sign-upload params aws-config {:key-fn :file-name}))
+  ([{:keys [file-name mime-type] :as params}
+    {:keys [bucket aws-zone aws-access-key aws-secret-key]}
+    {:keys [key-fn]}]
+   {:pre [(ifn? key-fn)]}
+   (let [key (key-fn params)]
+     (assert (string? key)
+             (str "The given :key-fn returned " key " with type " (type key)
+                  " when given file-name: " file-name
+                  " and mime-type: " mime-type ". It should return a string."))
+     (assert (zone->endpoint aws-zone) "No endpoint found for given AWS Zone")
+     (let [p (policy bucket key mime-type)]
+       {:action (str "https://" bucket "." (zone->endpoint aws-zone) ".amazonaws.com/")
+        :key    key
+        :Content-Type mime-type
+        :policy p
+        :acl    "public-read"
+        :success_action_status "201"
+        :AWSAccessKeyId aws-access-key
+        :signature (hmac-sha1 aws-secret-key p)}))))
