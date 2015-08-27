@@ -53,7 +53,7 @@ map to `s3-pipe` in the frontend.
 In your frontend code you can now use `s3-beam.client/s3-pipe`.
 `s3-pipe`'s argument is a channel where completed uploads will be
 reported. The function returns a channel where you can put File
-objects that should get uploaded. It might also take an extra options
+objects that should get uploaded. It can also take an extra options
 map with the previously mentioned `:server-url` like so:
 
     (s3/s3-pipe uploaded {:server-url "/my-cool-route"})
