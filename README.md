@@ -4,7 +4,7 @@
 from the browser to S3 (CORS upload).
 
 ```clj
-[org.martinklepsch/s3-beam "0.3.0"]
+[org.martinklepsch/s3-beam "0.3.1"]
 ```
 
 ## Usage
