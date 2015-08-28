@@ -41,9 +41,25 @@ Please follow Amazon's [official documentation](http://docs.aws.amazon.com/Amazo
 (def access-key "your-aws-access-key")
 (def secret-key "your-aws-secret-key")
 
+(defn my-key-fn []
+  (fn [r]
+    (let [rand-str (str (apply *' (list (rand-int 2147483647)
+                                        (System/currentTimeMillis))))]
+      (str (subs rand-str 0 9) "/" (:file-name r)))))
+
+(defn s3-sign [bucket aws-zone access-key secret-key]
+  (fn [request]
+    {:status 200
+     :body (pr-str (s3b/sign-upload (:params request)
+                                    {:bucket bucket
+                                     :aws-zone aws-zone
+                                     :aws-access-key access-key
+                                     :aws-secret-key secret-key}
+                                    {:key-fn  (my-key-fn)}))}))
+
 (defroutes routes
   (resources "/")
-  (GET "/sign" {params :params} (s3b/s3-sign bucket aws-zone access-key secret-key)))
+  (GET "/sign" {params :params} (s3-sign bucket aws-zone access-key secret-key)))
 ```
 
 If you want to use a route different than `/sign`, define it in the
@@ -83,7 +99,16 @@ An example using it within an Om component:
     )
 ```
 
+The `uploaded` channel will return a map with the `:file` object that
+was uploaded and a `:response` map that contains the `:location`,
+`:bucket`, `:key`, and `:etag` of the file in S3. 
+
 ## Changes
+
+#### Not Released
+
+- Added `:key-fn` option `s3-beam.handler/sign-upload` to generate
+  custom S3 keys from `file-name` and `mime-type`.
 
 #### 0.3.1
 
