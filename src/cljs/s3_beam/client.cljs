@@ -107,9 +107,8 @@
                       :error-code      error-code
                       :error-message   (str "While trying to upload file: "
                                              error-message)
-                      :response   (if-let [response-xml (.getResponseXml xhr)]
-                                    (xml->map response-xml)
-                                    "")
+                      :response   (when-let [response-xml (.getResponseXml xhr)]
+                                    (xml->map response-xml))
                       :xhr xhr
                       :http-error-code http-error-code})
             (close! ch))))
