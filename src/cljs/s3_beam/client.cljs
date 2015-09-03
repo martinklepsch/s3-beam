@@ -4,11 +4,9 @@
             [cljs.core.async :as async :refer [chan put! close! pipeline-async]]
             [goog.dom :as gdom]
             [goog.events :as events])
-  (:import  (goog Uri)
-            (goog.net XhrIo)
-            goog.net.EventType
-            goog.net.ErrorCode
-            (goog.events EventType)))
+  (:import  [goog Uri]
+            [goog.net XhrIo EventType ErrorCode]
+            [goog.events EventType]))
 
 (defn file->map [f]
   {:name (.-name f)
