@@ -57,7 +57,7 @@
                                            error-message)
                     :http-error-code http-error-code})
           (close! ch))))
-    (. xhr (send (signing-url server-url (:name fmap) (:type fmap)) "GET" nil nil))))
+    (. xhr send (signing-url server-url (:name fmap) (:type fmap)) "GET")))
 
 (defn formdata-from-map [m]
   (let [fd (new js/FormData)]
@@ -95,9 +95,8 @@
       (events/listen xhr goog.net.EventType.SUCCESS
         (fn [_]
           (put! ch {:file       (:f upload-info)
-                    :response   (if-let [response-xml (.getResponseXml xhr)]
-                                    (xml->map response-xml)
-                                    "")
+                    :response   (when-let [response-xml (.getResponseXml xhr)]
+                                    (xml->map response-xml))
                     :xhr xhr
                     :identifier identifier})
           (close! ch)))
@@ -116,17 +115,17 @@
                       :xhr xhr
                       :http-error-code http-error-code})
             (close! ch))))
-      (. xhr (send (:action (:signature upload-info)) "POST" form-data nil)))))
+      (. xhr send (:action (:signature upload-info)) "POST" form-data))))
 
 (defn s3-pipe
   "Takes a channel where completed uploads will be reported as a map and returns a channel where
   you can put File objects, or input maps that should get uploaded. (see `upload-file` and `sign-file`)
   May also take an options map with:
-    :server-url - the signing server url, defaults to \"/sign\"
+    :server-url      - the signing server url, defaults to \"/sign\"
     :response-parser - a function to process the signing response from the signing server into EDN
-    - defaults to read-string.
-    :key-fn - a function used to generate the object key for the uploaded file on S3
-    - defaults to nil, which means it will use the passed filename as the object key."
+                       defaults to read-string.
+    :key-fn          - a function used to generate the object key for the uploaded file on S3
+                       defaults to nil, which means it will use the passed filename as the object key."
   ([report-chan] (s3-pipe report-chan {}))
   ([report-chan opts]
    (let [opts       (merge {:server-url "/sign" :response-parser #(reader/read-string %)}
