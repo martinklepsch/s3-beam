@@ -83,7 +83,7 @@
   [upload-info ch]
   (if (contains? upload-info :error-code)
     (do
-      (put! ch (select-keys upload-info [:identifier :error-code :error-message :http-error-code]))
+      (put! ch upload-info)
       (close! ch))
     (let [xhr        (XhrIo.)
           identifier (:identifier upload-info)
