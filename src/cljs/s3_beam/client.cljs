@@ -72,9 +72,9 @@
     (zipmap (map (comp keyword first) kv) (map second kv))))
 
 (defn upload-file
-  "Take the signature information `upload-info`, and a channel `ch`,
+  "Take the signature information `upload-info`, and a response channel `ch`,
   and does the S3 upload.
-  Returns a map with:
+  Responds on the response channel with a map with:
     :file - the File that was uploaded
     :response - a map of S3 metadata: :key, :location, :bucket, :etag
     :identifier - an identifier pass-through value for caller to identify the file with
