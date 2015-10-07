@@ -14,19 +14,16 @@
 
 (defn policy
   "Generate policy for upload of `key` with `mime-type` to be uploaded
-  within optional `expiration-window` (defaults to 60), and optional
-  `acl` (defaults to 'public-read')."
-  ([bucket key mime-type]
-     (policy bucket key mime-type 60 "public-read"))
-  ([bucket key mime-type expiration-window acl]
-     (ring.util.codec/base64-encode
+   within `expiration-window`, and `acl`."
+  [bucket key mime-type expiration-window acl]
+  (ring.util.codec/base64-encode
       (.getBytes (json/write-str { "expiration" (now-plus expiration-window)
                                    "conditions" [{"bucket" bucket}
                                                  {"acl" acl}
                                                  ["starts-with" "$Content-Type" mime-type]
                                                  ["starts-with" "$key" key]
                                                  {"success_action_status" "201"}]})
-                 "UTF-8"))))
+                 "UTF-8")))
 
 (defn hmac-sha1 [key string]
   "Returns signature of `string` with a given `key` using SHA-1 HMAC."
