@@ -14,14 +14,15 @@
 
 (defn policy
   "Generate policy for upload of `key` with `mime-type` to be uploaded
-  within optional `expiration-window` (defaults to 60)."
+  within optional `expiration-window` (defaults to 60), and optional
+  `acl` (defaults to 'public-read')."
   ([bucket key mime-type]
-     (policy bucket key mime-type 60))
-  ([bucket key mime-type expiration-window]
+     (policy bucket key mime-type 60 "public-read"))
+  ([bucket key mime-type expiration-window acl]
      (ring.util.codec/base64-encode
       (.getBytes (json/write-str { "expiration" (now-plus expiration-window)
                                    "conditions" [{"bucket" bucket}
-                                                 {"acl" "public-read"}
+                                                 {"acl" acl}
                                                  ["starts-with" "$Content-Type" mime-type]
                                                  ["starts-with" "$key" key]
                                                  {"success_action_status" "201"}]})
@@ -48,14 +49,14 @@
    "sa-east-1"      "s3-sa-east-1"})
 
 (defn sign-upload [{:keys [file-name mime-type]}
-                   {:keys [bucket aws-zone aws-access-key aws-secret-key]}]
+                   {:keys [bucket aws-zone aws-access-key aws-secret-key acl] :or {acl "public-read"}}]
   (assert (zone->endpoint aws-zone) "No endpoint found for given AWS Zone")
-  (let [p (policy bucket file-name mime-type)]
+  (let [p (policy bucket file-name mime-type 60 acl)]
     {:action (str "https://" bucket "." (zone->endpoint aws-zone) ".amazonaws.com/")
      :key    file-name
      :Content-Type mime-type
      :policy p
-     :acl    "public-read"
+     :acl    acl
      :success_action_status "201"
      :AWSAccessKeyId aws-access-key
      :signature (hmac-sha1 aws-secret-key p)}))
