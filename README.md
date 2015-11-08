@@ -5,7 +5,7 @@ from the browser to S3 (CORS upload).
 
 [](dependency)
 ```clojure
-[org.martinklepsch/s3-beam "0.3.1"] ;; latest release
+[org.martinklepsch/s3-beam "0.4.0"] ;; latest release
 ```
 [](/dependency)
 
@@ -84,6 +84,20 @@ An example using it within an Om component:
 ```
 
 ## Changes
+
+#### 0.4.0
+
+- Support custom ACLs. The `sign-upload` function that can be used to
+  implement custom signing routes now supports an additional `:acl` key
+  to upload assets with a different ACL than `public-read`.
+
+        (sign-upload {:file-name "xyz.html" :mime-type "text/html"}
+                     {:bucket bucket
+                      :aws-zone aws-zone
+                      :aws-access-key access-key
+                      :aws-secret-key secret-key
+                      :acl "authenticated-read"})
+- Changes the arity of `s3-beam.handler/policy` function.
 
 #### 0.3.1
 
