@@ -11,19 +11,25 @@
    :type (.-type f)
    :size (.-size f)})
 
-(defn signing-url [server-url fname fmime]
-  {:pre [(string? server-url) (string? fname) (string? fmime)]}
-  (.toString (doto (Uri. server-url)
-               (.setParameterValue "file-name" fname)
-               (.setParameterValue "mime-type" fmime))))
+(defn signing-url [server-url params]
+  {:pre [(string? server-url) (map? params)]}
+  (let [uri (Uri. server-url)]
+    (doseq [[k v] params]
+      (.setParameterValue uri (name k) v))
+    (.toString uri)))
 
-(defn sign-file [server-url file ch]
-  (let [fmap    (file->map file)
+(defn sign-file [opts file ch]
+  (let [server-url (:server-url opts)
+        fmap    (file->map file)
+        params (merge fmap ((:params opts)))
         edn-ize #(reader/read-string (.getResponseText (.-target %)))]
-    (xhr/send (signing-url server-url (:name fmap) (:type fmap))
+    (xhr/send (signing-url server-url params)
            (fn [res]
              (put! ch {:f file :signature (edn-ize res)})
-             (close! ch)))))
+             (close! ch))
+              "GET"
+              nil
+              (clj->js ((:headers opts))))))
 
 (defn formdata-from-map [m]
   (let [fd (new js/FormData)]
@@ -48,11 +54,13 @@
   "Takes a channel where completed uploads will be reported and 
   returns a channel where you can put File objects that should get uploaded.
   May also take an options map with:
-    :server-url - the sign server url, defaults to \"/sign\""
+    :server-url - the sign server url, defaults to \"/sign\"
+    :headers - A function that returns a map with headers to send in the GET request
+    :params - A function that returns a map with parameters to attach to the signing URL."
   ([report-chan] (s3-pipe report-chan {:server-url "/sign"}))
   ([report-chan opts]
    (let [to-process (chan)
          signed     (chan)]
-     (pipeline-async 3 signed (partial sign-file (:server-url opts)) to-process)
+     (pipeline-async 3 signed (partial sign-file opts) to-process)
      (pipeline-async 3 report-chan upload-file signed)
      to-process)))
