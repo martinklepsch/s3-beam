@@ -21,7 +21,7 @@
 (defn sign-file [opts file ch]
   (let [server-url (:server-url opts)
         fmap    (file->map file)
-        params (merge fmap ((:params opts)))
+        params (merge fmap ((:params opts) file))
         edn-ize #(reader/read-string (.getResponseText (.-target %)))]
     (xhr/send (signing-url server-url params)
            (fn [res]
@@ -29,7 +29,7 @@
              (close! ch))
               "GET"
               nil
-              (clj->js ((:headers opts))))))
+              (clj->js ((:headers opts) file)))))
 
 (defn formdata-from-map [m]
   (let [fd (new js/FormData)]
