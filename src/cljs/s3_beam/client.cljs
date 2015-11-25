@@ -27,8 +27,8 @@
       :file                  - A `File` object
       :identifier (optional) - A variable used to uniquely identify this file upload.
                                This will be included in the response channel.
-      :key (optional)        - The file-name parameter that is sent to the signing server.
-   Alternatively, if a :key key exists in the input-map, use that in preference to the key-fn as an object-key.
+      :key (optional)        - The file-name parameter that is sent to the signing server. If a :key key
+                               exists in the input-map it will be used instead of the key-fn as an object-key.
    Sends the request to the server-url to be signed."
   [server-url edn-ize key-fn headers-fn input-map-or-file ch]
   (let [xhr (XhrIo.)
