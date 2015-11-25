@@ -20,13 +20,16 @@
                (.setParameterValue "mime-type" fmime))))
 
 (defn sign-file
-  "Takes a `server-url`, either an input map (with keys :file and optionally :identifier and :key),
-  as `input-map-or-file` and a channel `ch`. Also takes a fn `edn-ize` which is for interpreting
-  the server response text into edn.
-  Takes a `key-fn` function that takes one argument (the filename) and generates a object-key to
-  use to create the file on S3.
-  Alternatively, if a :key key exists in the input-map, use that in preference to the key-fn as an object-key.
-  Sends the request to the server-url to be signed."
+  "Takes a `server-url` and a fn `edn-ize` which is for interpreting the server response text into edn.
+   Takes a `key-fn` function that takes one argument (the filename) and generates a object-key to
+   use to create the file on S3.
+   Also takes an input map with:
+      :file                  - A `File` object
+      :identifier (optional) - A variable used to uniquely identify this file upload.
+                               This will be included in the response channel.
+      :key (optional)        - The file-name parameter that is sent to the signing server.
+   Alternatively, if a :key key exists in the input-map, use that in preference to the key-fn as an object-key.
+   Sends the request to the server-url to be signed."
   [server-url edn-ize key-fn headers-fn input-map-or-file ch]
   (let [xhr (XhrIo.)
         {:keys [file identifier] :as input-map}
@@ -55,7 +58,9 @@
                                                        error-message)
                                  :http-error-code http-error-code})
                        (close! ch))))
-    (. xhr send (signing-url server-url (:name fmap) (:type fmap)) "GET" nil (clj->js (headers-fn fmap)))))
+    (. xhr send (signing-url server-url (:name fmap) (:type fmap)) "GET" nil (clj->js (if (some? headers-fn)
+                                                                                        (headers-fn fmap)
+                                                                                        {})))))
 
 (defn formdata-from-map [m]
   (let [fd (new js/FormData)]
