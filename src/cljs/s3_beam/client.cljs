@@ -27,7 +27,7 @@
   use to create the file on S3.
   Alternatively, if a :key key exists in the input-map, use that in preference to the key-fn as an object-key.
   Sends the request to the server-url to be signed."
-  [server-url edn-ize key-fn input-map-or-file ch]
+  [server-url edn-ize key-fn headers-fn input-map-or-file ch]
   (let [xhr (XhrIo.)
         {:keys [file identifier] :as input-map}
         (if (map? input-map-or-file)
@@ -55,7 +55,7 @@
                                                        error-message)
                                  :http-error-code http-error-code})
                        (close! ch))))
-    (. xhr send (signing-url server-url (:name fmap) (:type fmap)) "GET")))
+    (. xhr send (signing-url server-url (:name fmap) (:type fmap)) "GET" nil (clj->js (headers-fn fmap)))))
 
 (defn formdata-from-map [m]
   (let [fd (new js/FormData)]
@@ -122,7 +122,8 @@
     :response-parser - a function to process the signing response from the signing server into EDN
                        defaults to read-string.
     :key-fn          - a function used to generate the object key for the uploaded file on S3
-                       defaults to nil, which means it will use the passed filename as the object key."
+                       defaults to nil, which means it will use the passed filename as the object key.
+    :headers-fn      - a function used to create the headers for the GET request to the signing server."
   ([report-chan] (s3-pipe report-chan {}))
   ([report-chan opts]
    (let [opts (merge {:server-url "/sign" :response-parser #(reader/read-string %)}
@@ -134,7 +135,8 @@
                      (partial sign-file
                               (:server-url opts)
                               (:response-parser opts)
-                              (:key-fn opts))
+                              (:key-fn opts)
+                              (:headers-fn opts))
                      to-process)
      (pipeline-async 3 report-chan upload-file signed)
      to-process)))
