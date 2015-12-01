@@ -5,7 +5,7 @@ from the browser to S3 (CORS upload).
 
 [](dependency)
 ```clojure
-[org.martinklepsch/s3-beam "0.4.0"] ;; latest release
+[org.martinklepsch/s3-beam "0.5.0"] ;; latest release
 ```
 [](/dependency)
 
@@ -55,10 +55,29 @@ map to `s3-pipe` in the frontend.
 In your frontend code you can now use `s3-beam.client/s3-pipe`.
 `s3-pipe`'s argument is a channel where completed uploads will be
 reported. The function returns a channel where you can put File
-objects that should get uploaded. It can also take an extra options
-map with the previously mentioned `:server-url` like so:
+objects of a file map that should get uploaded. It can also take an 
+extra options map with the previously mentioned `:server-url` like so:
 
     (s3/s3-pipe uploaded {:server-url "/my-cool-route"})
+
+The full options map spec is:
+
+- `:server-url` the signing server url, defaults to "/sign"
+- `:response-parser` a function to process the signing response from the signing server into EDN
+                     defaults to read-string. 
+- `:key-fn` a function used to generate the object key for the uploaded file on S3
+                   defaults to nil, which means it will use the passed filename as the object key.             
+- `:headers-fn` a function used to create the headers for the GET request to the signing server.
+                   The returned headers should be a Clojure map of header name Strings to corresponding 
+                   header value Strings.
+                   
+If you choose to place a file map instead of a `File` object, you file map should follow:
+
+- `:file`                  A `File` object
+- `:identifier` (optional) A variable used to uniquely identify this file upload.
+                           This will be included in the response channel.
+- `:key` (optional)        The file-name parameter that is sent to the signing server. If a `:key` key
+                           exists in the input-map it will be used instead of the key-fn as an object-key.
 
 An example using it within an Om component:
 
@@ -83,8 +102,61 @@ An example using it within an Om component:
     )
 ```
 
+The spec for the returned map (in the example above the returned map is `v`):
+
+- `:file` The `File` object from the uploaded file
+- `:response` The upload response from S3 as a map with:
+ - `:location` The S3 URL of the uploaded file
+ - `:bucket` The S3 bucket where the file is located
+ - `:key` The S3 key for the file
+ - `:etag` The etag for the file          
+- `:xhr` The `XhrIo` object used to POST to S3
+- `:identifier` A value used to uniquely identify the uploaded file
+
+Or, if an error occurs during upload processing, an error-map will be placed on the response channel:
+
+- `:identifier` A variable used to uniquely identify this file upload. This will be included in the response channel.
+- `:error-code` The error code from the XHR
+- `:error-message` The debug message from the error code
+- `:http-error-code` The HTTP error code
+
 ## Changes
 
+#### 0.5.0
+
+- Allow the upload-queue to be passed an input-map instead of a file. This
+  input-map follows the spec:
+  
+    - `:file`                  A `File` object
+    - `:identifier` (optional) A variable used to uniquely identify this file upload.
+                               This will be included in the response channel.
+    - `:key` (optional)        The file-name parameter that is sent to the signing server. If a `:key` key
+                               exists in the input-map it will be used instead of the key-fn as an object-key.
+- Introduce error handling. When an error has been thrown while uploading a file to S3
+  an error-map will be put onto the channel. The error-map follows the spec:
+  
+    - `:identifier`      A variable used to uniquely identify this file upload. This will be
+                         included in the response channel.
+    - `:error-code`      The error code from the XHR
+    - `:error-message`   The debug message from the error code
+    - `:http-error-code` The HTTP error code
+- New options are available in the options map:
+
+    - `:response-parser` a function to process the signing response from the signing server into EDN
+                         defaults to read-string.
+    - `:key-fn`          a function used to generate the object key for the uploaded file on S3
+                         defaults to nil, which means it will use the passed filename as the object key.
+    - `:headers-fn`      a function used to create the headers for the GET request to the signing server.
+- Places a map into the upload-channel with: 
+    - `:file`       The `File` object from the uploaded file
+    - `:response`   The upload response from S3 as a map with:
+     - `:location` The S3 URL of the uploaded file
+     - `:bucket`   The S3 bucket where the file is located
+     - `:key`      The S3 key for the file
+     - `:etag`     The etag for the file
+    - `:xhr`        The `XhrIo` object used to POST to S3
+    - `:identifier` A value used to uniquely identify the uploaded file
+    
 #### 0.4.0
 
 - Support custom ACLs. The `sign-upload` function that can be used to
