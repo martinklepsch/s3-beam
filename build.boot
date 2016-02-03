@@ -1,6 +1,6 @@
 (set-env!
-  :source-paths   #{"src/clj" "src/cljs"}
-  :dependencies  '[[adzerk/bootlaces   "0.1.11" :scope "test"]
+  :resource-paths #{"src/clj" "src/cljs"}
+  :dependencies  '[[adzerk/bootlaces   "0.1.13" :scope "test"]
                    [org.clojure/clojure "1.6.0" :scope "provided"]
                    [org.clojure/clojurescript "0.0-2371" :scope "provided"]
                    [org.clojure/data.json "0.2.5"]
@@ -8,9 +8,8 @@
 
 (require '[adzerk.bootlaces :refer :all])
 
-(def +version+ "0.5.0")
-(bootlaces! +version+)
-(set-env! :resource-paths #{"src/clj" "src/cljs"})
+(def +version+ "0.5.1")
+(bootlaces! +version+ :dont-modify-paths? true)
 
 (task-options!
  pom  {:project     'org.martinklepsch/s3-beam
