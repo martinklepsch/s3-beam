@@ -37,6 +37,7 @@
           input-map-or-file
           {:file input-map-or-file})
         fmap (file->map file)
+        _ (assert (some? (:type fmap)) "File must have a file type provided, it cannot be nil.")
         fmap (cond
                (:key input-map) (assoc fmap :name (:key input-map))
                key-fn (update-in fmap [:name] key-fn)
