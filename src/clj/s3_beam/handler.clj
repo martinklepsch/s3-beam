@@ -46,14 +46,14 @@
    "sa-east-1"      "s3-sa-east-1"})
 
 (defn sign-upload [{:keys [file-name mime-type]}
-                   {:keys [bucket aws-zone aws-access-key aws-secret-key acl] :or {acl "public-read"}}]
+                   {:keys [bucket aws-zone aws-access-key aws-secret-key acl upload-url] :or {acl "public-read"}}]
   (assert (zone->endpoint aws-zone) "No endpoint found for given AWS Zone")
   (assert aws-access-key "AWS Access Key cannot be nil")
   (assert aws-secret-key "AWS Secret Key cannot be nil")
   (assert acl "ACL cannot be nil")
   (assert mime-type "Mime-type cannot be nil.")
   (let [p (policy bucket file-name mime-type 60 acl)]
-    {:action (str "https://" (zone->endpoint aws-zone) ".amazonaws.com/" bucket "/")
+    {:action (or upload-url (str "https://" (zone->endpoint aws-zone) ".amazonaws.com/" bucket "/"))
      :key    file-name
      :Content-Type mime-type
      :policy p
@@ -62,10 +62,14 @@
      :AWSAccessKeyId aws-access-key
      :signature (hmac-sha1 aws-secret-key p)}))
 
-(defn s3-sign [bucket aws-zone access-key secret-key]
-  (fn [request]
-    {:status 200
-     :body   (pr-str (sign-upload (:params request) {:bucket bucket
-                                                     :aws-zone aws-zone
-                                                     :aws-access-key access-key
-                                                     :aws-secret-key secret-key}))}))
+(defn s3-sign
+  ([bucket aws-zone access-key secret-key]
+   (s3-sign bucket aws-zone access-key secret-key nil))
+  ([bucket aws-zone access-key secret-key upload-url]
+   (fn [request]
+     {:status 200
+      :body   (pr-str (sign-upload (:params request) {:bucket         bucket
+                                                      :aws-zone       aws-zone
+                                                      :aws-access-key access-key
+                                                      :aws-secret-key secret-key
+                                                      :upload-url     upload-url}))})))

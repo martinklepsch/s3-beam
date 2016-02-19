@@ -50,6 +50,11 @@ If you want to use a route different than `/sign`, define it in the
 handler, `(GET "/my-cool-route" ...)`, and then pass it in the options
 map to `s3-pipe` in the frontend.
 
+If you are serving your S3 bucket with CloudFront, or another CDN/proxy, you can pass
+`upload-url` as a fifth parameter to `s3-sign`, so that the ClojureScript client is directed
+to upload through this bucket. You still need to pass the bucket name, as the policy that is
+created and signed is based on the bucket name.
+
 ### 3. Integrate the upload pipeline into your frontend
 
 In your frontend code you can now use `s3-beam.client/s3-pipe`.
