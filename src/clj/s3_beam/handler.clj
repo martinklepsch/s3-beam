@@ -47,7 +47,7 @@
 
 (defn sign-upload [{:keys [file-name mime-type]}
                    {:keys [bucket aws-zone aws-access-key aws-secret-key acl] :or {acl "public-read"}}]
-  (assert (zone->endpoint aws-zone) "No endpoint found for given AWS Zone")gi
+  (assert (zone->endpoint aws-zone) "No endpoint found for given AWS Zone")
   (assert aws-access-key "AWS Access Key cannot be nil")
   (assert aws-secret-key "AWS Secret Key cannot be nil")
   (assert acl "ACL cannot be nil")
