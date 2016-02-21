@@ -58,7 +58,7 @@ reported. The function returns a channel where you can put File
 objects of a file map that should get uploaded. It can also take an 
 extra options map with the previously mentioned `:server-url` like so:
 
-    (s3/s3-pipe uploaded {:server-url "/my-cool-route"})
+    (s3/s3-pipe uploaded {:server-url "/my-cool-route"}) ; assuming s3-beam.client is NS aliased as s3
 
 The full options map spec is:
 
@@ -82,6 +82,10 @@ If you choose to place a file map instead of a `File` object, you file map shoul
 An example using it within an Om component:
 
 ```clj
+(ns your.client
+  (:require [s3-beam.client :as s3]
+  ...))
+  
 (defcomponent upload-form [app-state owner]
   (init-state [_]
     (let [uploaded (chan 20)]
