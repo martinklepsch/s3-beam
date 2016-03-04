@@ -53,7 +53,7 @@
   (assert acl "ACL cannot be nil")
   (assert mime-type "Mime-type cannot be nil.")
   (let [p (policy bucket file-name mime-type 60 acl)]
-    {:action (str "https://" bucket "." (zone->endpoint aws-zone) ".amazonaws.com/")
+    {:action (str "https://" (zone->endpoint aws-zone) ".amazonaws.com/" bucket "/")
      :key    file-name
      :Content-Type mime-type
      :policy p
