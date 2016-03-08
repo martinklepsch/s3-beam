@@ -37,7 +37,7 @@ Please follow Amazon's [official documentation](http://docs.aws.amazon.com/Amazo
             [compojure.route :refer [resources]]))
 
 (def bucket "your-bucket")
-(def aws-zone "s3-eu-west-1")
+(def aws-zone "eu-west-1")
 (def access-key "your-aws-access-key")
 (def secret-key "your-aws-secret-key")
 
