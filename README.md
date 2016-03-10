@@ -106,6 +106,8 @@ An example using it within an Om component:
     )
 ```
 
+#### Return values
+
 The spec for the returned map (in the example above the returned map is `v`):
 
 - `:file` The `File` object from the uploaded file
