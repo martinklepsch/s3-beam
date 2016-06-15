@@ -8,7 +8,7 @@
 
 (require '[adzerk.bootlaces :refer :all])
 
-(def +version+ "0.5.1")
+(def +version+ "0.5.2")
 (bootlaces! +version+ :dont-modify-paths? true)
 
 (task-options!

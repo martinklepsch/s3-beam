@@ -5,7 +5,7 @@ from the browser to S3 (CORS upload).
 
 [](dependency)
 ```clojure
-[org.martinklepsch/s3-beam "0.5.1"] ;; latest release
+[org.martinklepsch/s3-beam "0.5.2"] ;; latest release
 ```
 [](/dependency)
 
