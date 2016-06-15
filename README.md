@@ -133,6 +133,12 @@ Or, if an error occurs during upload processing, an error-map will be placed on 
 
 ## Changes
 
+#### 0.5.2
+
+- Allow the user to upload to S3 through a custom URL as an extra parameter to `sign-upload`
+- Support bucket names with a '.' in them
+- Add asserts that arguments are provided
+
 #### 0.5.0
 
 - Allow the upload-queue to be passed an input-map instead of a file. This
