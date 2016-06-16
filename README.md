@@ -60,7 +60,7 @@ created and signed is based on the bucket name.
 In your frontend code you can now use `s3-beam.client/s3-pipe`.
 `s3-pipe`'s argument is a channel where completed uploads will be
 reported. The function returns a channel where you can put File
-objects of a file map that should get uploaded. It can also take an 
+objects of a file map that should get uploaded. It can also take an
 extra options map with the previously mentioned `:server-url` like so:
 
     (s3/s3-pipe uploaded {:server-url "/my-cool-route"}) ; assuming s3-beam.client is NS aliased as s3
@@ -69,13 +69,13 @@ The full options map spec is:
 
 - `:server-url` the signing server url, defaults to "/sign"
 - `:response-parser` a function to process the signing response from the signing server into EDN
-                     defaults to read-string. 
+                     defaults to read-string.
 - `:key-fn` a function used to generate the object key for the uploaded file on S3
-                   defaults to nil, which means it will use the passed filename as the object key.             
+                   defaults to nil, which means it will use the passed filename as the object key.
 - `:headers-fn` a function used to create the headers for the GET request to the signing server.
-                   The returned headers should be a Clojure map of header name Strings to corresponding 
+                   The returned headers should be a Clojure map of header name Strings to corresponding
                    header value Strings.
-                   
+
 If you choose to place a file map instead of a `File` object, you file map should follow:
 
 - `:file`                  A `File` object
@@ -90,7 +90,7 @@ An example using it within an Om component:
 (ns your.client
   (:require [s3-beam.client :as s3]
   ...))
-  
+
 (defcomponent upload-form [app-state owner]
   (init-state [_]
     (let [uploaded (chan 20)]
@@ -120,7 +120,7 @@ The spec for the returned map (in the example above the returned map is `v`):
  - `:location` The S3 URL of the uploaded file
  - `:bucket` The S3 bucket where the file is located
  - `:key` The S3 key for the file
- - `:etag` The etag for the file          
+ - `:etag` The etag for the file
 - `:xhr` The `XhrIo` object used to POST to S3
 - `:identifier` A value used to uniquely identify the uploaded file
 
@@ -139,11 +139,11 @@ Or, if an error occurs during upload processing, an error-map will be placed on 
 - Support bucket names with a '.' in them
 - Add asserts that arguments are provided
 
-#### 0.5.0
+#### 0.5.1
 
 - Allow the upload-queue to be passed an input-map instead of a file. This
   input-map follows the spec:
-  
+
     - `:file`                  A `File` object
     - `:identifier` (optional) A variable used to uniquely identify this file upload.
                                This will be included in the response channel.
@@ -151,7 +151,7 @@ Or, if an error occurs during upload processing, an error-map will be placed on 
                                exists in the input-map it will be used instead of the key-fn as an object-key.
 - Introduce error handling. When an error has been thrown while uploading a file to S3
   an error-map will be put onto the channel. The error-map follows the spec:
-  
+
     - `:identifier`      A variable used to uniquely identify this file upload. This will be
                          included in the response channel.
     - `:error-code`      The error code from the XHR
@@ -164,7 +164,7 @@ Or, if an error occurs during upload processing, an error-map will be placed on 
     - `:key-fn`          a function used to generate the object key for the uploaded file on S3
                          defaults to nil, which means it will use the passed filename as the object key.
     - `:headers-fn`      a function used to create the headers for the GET request to the signing server.
-- Places a map into the upload-channel with: 
+- Places a map into the upload-channel with:
     - `:file`       The `File` object from the uploaded file
     - `:response`   The upload response from S3 as a map with:
      - `:location` The S3 URL of the uploaded file
@@ -173,7 +173,7 @@ Or, if an error occurs during upload processing, an error-map will be placed on 
      - `:etag`     The etag for the file
     - `:xhr`        The `XhrIo` object used to POST to S3
     - `:identifier` A value used to uniquely identify the uploaded file
-    
+
 #### 0.4.0
 
 - Support custom ACLs. The `sign-upload` function that can be used to
