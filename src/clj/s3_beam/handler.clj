@@ -68,7 +68,7 @@
         x-amz-date (x-amz-date)
         p (policy bucket file-name mime-type 60 acl x-amz-credential x-amz-algorithm x-amz-date)
         ]
-    {:action (format "http://%s.s3.amazonaws.com" bucket)
+    {:action (or upload-url (format "http://%s.s3.amazonaws.com" bucket))
      :key    file-name
      :Content-Type mime-type
      :policy p
