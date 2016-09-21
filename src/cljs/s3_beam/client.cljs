@@ -93,9 +93,10 @@
       (close! ch))
     (let [xhr (XhrIo.)
           identifier (:identifier upload-info)
-          sig-fields [:key :Content-Type :success_action_status :policy :AWSAccessKeyId :signature :acl]
+          sig-fields [:key :Content-Type :success_action_status :policy :x-amz-credential :x-amz-signature :x-amz-algorithm :x-amz-date :acl]
           signature (select-keys (:signature upload-info) sig-fields)
-          form-data (formdata-from-map (merge signature {:file (:f upload-info)}))]
+          form-data (formdata-from-map signature)]
+      (.append form-data "file" (:f upload-info)) ;need to add this last otherwise s3 throws an error
       (events/listen xhr goog.net.EventType.SUCCESS
                      (fn [_]
                        (put! ch {:file       (:f upload-info)
