@@ -14,53 +14,70 @@
 
 (defn policy
   "Generate policy for upload of `key` with `mime-type` to be uploaded
-   within `expiration-window`, and `acl`."
-  [bucket key mime-type expiration-window acl]
+  within `expiration-window`, and `acl`."
+  [bucket key mime-type expiration-window acl x-amz-credential x-amz-algorithm x-amz-date]
   (ring.util.codec/base64-encode
-      (.getBytes (json/write-str { "expiration" (now-plus expiration-window)
-                                   "conditions" [{"bucket" bucket}
-                                                 {"acl" acl}
-                                                 ["starts-with" "$Content-Type" mime-type]
-                                                 ["starts-with" "$key" key]
-                                                 {"success_action_status" "201"}]})
-                 "UTF-8")))
+    (.getBytes (json/write-str { "expiration" (now-plus expiration-window)
+                                 "conditions" [{"bucket" bucket}
+                                               {"acl" acl}
+                                               ["starts-with" "$Content-Type" mime-type]
+                                               ["starts-with" "$key" key]
+                                               {"x-amz-credential" x-amz-credential}
+                                               {"x-amz-algorithm" x-amz-algorithm}
+                                               {"x-amz-date" x-amz-date}
+                                               {"success_action_status" "201"}]})
+               "UTF-8")))
 
-(defn hmac-sha1 [key string]
-  "Returns signature of `string` with a given `key` using SHA-1 HMAC."
-  (ring.util.codec/base64-encode
-   (.doFinal (doto (javax.crypto.Mac/getInstance "HmacSHA1")
-               (.init (javax.crypto.spec.SecretKeySpec. (.getBytes key) "HmacSHA1")))
-             (.getBytes string "UTF-8"))))
+(defn hmac-sha256 [k s]
+  (.doFinal (doto (Mac/getInstance "HmacSHA256") (.init (SecretKeySpec. k "HmacSHA256"))) (.getBytes s "UTF-8")))
 
-(def zone->endpoint
-  "Mapping of AWS zones to S3 endpoints as documented here:
-   http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region"
-  {"us-east-1"      "s3"
-   "us-west-1"      "s3-us-west-1"
-   "us-west-2"      "s3-us-west-2"
-   "eu-west-1"      "s3-eu-west-1"
-   "eu-central-1"   "s3-eu-central-1"
-   "ap-southeast-1" "s3-ap-southeast-1"
-   "ap-southeast-2" "s3-ap-southeast-2"
-   "ap-northeast-1" "s3-ap-northeast-1"
-   "sa-east-1"      "s3-sa-east-1"})
+(defn hex [s]
+  (apply str (map
+               (fn [s]
+                 (let [
+                        hex (Integer/toHexString s)
+                        ]
+                   (condp = (.length hex) 1 (str 0 hex) 8 (.substring hex 6) hex))) s)))
+
+(defn yyyyMMdd []
+  (.format (SimpleDateFormat. "yyyyMMdd") (Date.)))
+(defn x-amz-date []
+  (.format (SimpleDateFormat. "yyyyMMdd'T000000Z'") (Date.)))
+
+(defn sign-version-4
+  ([k s region]
+   (-> (str "AWS4" k)
+       (.getBytes "UTF-8")
+       (hmac-sha256 (yyyyMMdd))
+       (hmac-sha256 region)
+       (hmac-sha256 "s3")
+       (hmac-sha256 "aws4_request")
+       (hmac-sha256 s)
+       hex
+       )))
 
 (defn sign-upload [{:keys [file-name mime-type]}
                    {:keys [bucket aws-zone aws-access-key aws-secret-key acl upload-url] :or {acl "public-read"}}]
-  (assert (zone->endpoint aws-zone) "No endpoint found for given AWS Zone")
   (assert aws-access-key "AWS Access Key cannot be nil")
   (assert aws-secret-key "AWS Secret Key cannot be nil")
   (assert acl "ACL cannot be nil")
   (assert mime-type "Mime-type cannot be nil.")
-  (let [p (policy bucket file-name mime-type 60 acl)]
-    {:action (or upload-url (str "https://" (zone->endpoint aws-zone) ".amazonaws.com/" bucket "/"))
+  (let [yyyyMMdd (yyyyMMdd)
+        x-amz-credential (apply str (interpose "/" [aws-access-key yyyyMMdd aws-zone "s3" "aws4_request"]))
+        x-amz-algorithm "AWS4-HMAC-SHA256"
+        x-amz-date (x-amz-date)
+        p (policy bucket file-name mime-type 60 acl x-amz-credential x-amz-algorithm x-amz-date)
+        ]
+    {:action (or upload-url (format "http://%s.s3.amazonaws.com" bucket))
      :key    file-name
      :Content-Type mime-type
      :policy p
      :acl    acl
      :success_action_status "201"
-     :AWSAccessKeyId aws-access-key
-     :signature (hmac-sha1 aws-secret-key p)}))
+     :x-amz-credential x-amz-credential
+     :x-amz-algorithm x-amz-algorithm
+     :x-amz-date x-amz-date
+     :x-amz-signature (sign-version-4 aws-secret-key p aws-zone)}))
 
 (defn s3-sign
   ([bucket aws-zone access-key secret-key]
