@@ -1,6 +1,7 @@
 (ns s3-beam.handler
   (:require [clojure.data.json :as json]
-            [ring.util.codec :refer [base64-encode]])
+            [ring.util.codec :refer [base64-encode]]
+            [clojure.set :as set])
   (:import (javax.crypto Mac)
            (javax.crypto.spec SecretKeySpec)
            (java.text SimpleDateFormat)
@@ -15,15 +16,18 @@
 (defn policy
   "Generate policy for upload of `key` with `mime-type` to be uploaded
    within `expiration-window`, and `acl`."
-  [bucket key mime-type expiration-window acl]
-  (ring.util.codec/base64-encode
-      (.getBytes (json/write-str { "expiration" (now-plus expiration-window)
-                                   "conditions" [{"bucket" bucket}
-                                                 {"acl" acl}
-                                                 ["starts-with" "$Content-Type" mime-type]
-                                                 ["starts-with" "$key" key]
-                                                 {"success_action_status" "201"}]})
-                 "UTF-8")))
+  [bucket metadata expiration-window acl]
+  (let [conditions      (->> (set/rename-keys metadata {:file-name "key"
+                                                        :mime-type "Content-Type"})
+                             (map (fn [[k v]] ["eq" (str "$" (name k)) (name v)])))]
+    (-> {"expiration" (now-plus expiration-window)
+         "conditions" (concat [{"bucket" bucket}
+                               {"acl" acl}
+                               {"success_action_status" "201"}]
+                              conditions)}
+        (json/write-str)
+        (.getBytes "UTF-8")
+        (ring.util.codec/base64-encode))))
 
 (defn hmac-sha1 [key string]
   "Returns signature of `string` with a given `key` using SHA-1 HMAC."
@@ -45,31 +49,37 @@
    "ap-northeast-1" "s3-ap-northeast-1"
    "sa-east-1"      "s3-sa-east-1"})
 
-(defn sign-upload [{:keys [file-name mime-type]}
+(defn sign-upload [{:keys [file-name mime-type] :as metadata}
                    {:keys [bucket aws-zone aws-access-key aws-secret-key acl upload-url] :or {acl "public-read"}}]
   (assert (zone->endpoint aws-zone) "No endpoint found for given AWS Zone")
   (assert aws-access-key "AWS Access Key cannot be nil")
   (assert aws-secret-key "AWS Secret Key cannot be nil")
   (assert acl "ACL cannot be nil")
   (assert mime-type "Mime-type cannot be nil.")
-  (let [p (policy bucket file-name mime-type 60 acl)]
-    {:action (or upload-url (str "https://" (zone->endpoint aws-zone) ".amazonaws.com/" bucket "/"))
-     :key    file-name
-     :Content-Type mime-type
-     :policy p
-     :acl    acl
-     :success_action_status "201"
-     :AWSAccessKeyId aws-access-key
-     :signature (hmac-sha1 aws-secret-key p)}))
+  (let [p (policy bucket metadata 60 acl)
+        action (or upload-url (str "https://" (zone->endpoint aws-zone) ".amazonaws.com/" bucket "/"))
+        response {:action action
+                  :upload-url action
+                  :key file-name
+                  :Content-Type mime-type
+                  :policy p
+                  :acl acl
+                  :success_action_status "201"
+                  :AWSAccessKeyId aws-access-key
+                  :signature (hmac-sha1 aws-secret-key p)}]
+    (assoc response
+      :form-data (merge (dissoc metadata :file-name :mime-type)
+                        (dissoc response :action :upload-url)))))
 
 (defn s3-sign
   ([bucket aws-zone access-key secret-key]
    (s3-sign bucket aws-zone access-key secret-key nil))
   ([bucket aws-zone access-key secret-key upload-url]
    (fn [request]
-     {:status 200
-      :body   (pr-str (sign-upload (:params request) {:bucket         bucket
-                                                      :aws-zone       aws-zone
-                                                      :aws-access-key access-key
-                                                      :aws-secret-key secret-key
-                                                      :upload-url     upload-url}))})))
+     {:status  200
+      :body    (pr-str (sign-upload (:params request) {:bucket         bucket
+                                                       :aws-zone       aws-zone
+                                                       :aws-access-key access-key
+                                                       :aws-secret-key secret-key
+                                                       :upload-url     upload-url}))
+      :headers {"Content-Type" "application/edn"}})))
