@@ -3,7 +3,8 @@
   (:require [cljs.reader :as reader]
             [cljs.core.async :as async :refer [chan put! close! pipeline-async]]
             [goog.dom :as gdom]
-            [goog.events :as events])
+            [goog.events :as events]
+            [goog.Uri.QueryData :as qd])
   (:import [goog Uri]
            [goog.net XhrIo EventType ErrorCode]
            [goog.events EventType]))
@@ -13,11 +14,12 @@
    :type (.-type f)
    :size (.-size f)})
 
-(defn signing-url [server-url fname fmime]
-  {:pre [(string? server-url) (string? fname) (string? fmime)]}
-  (.toString (doto (Uri. server-url)
-               (.setParameterValue "file-name" fname)
-               (.setParameterValue "mime-type" fmime))))
+(defn signing-url [server-url params]
+  {:pre [(string? server-url) (string? (:file-name params)) (string? (:mime-type params))]}
+  (let [query-data (qd/createFromMap (clj->js params))]
+    (.. (Uri. server-url)
+        (setQueryData query-data)
+        (toString))))
 
 (defn sign-file
   "Takes a `server-url` and a fn `edn-ize` which is for interpreting the server response text into edn.
@@ -29,24 +31,31 @@
                                This will be included in the response channel.
       :key (optional)        - The file-name parameter that is sent to the signing server. If a :key key
                                exists in the input-map it will be used instead of the key-fn as an object-key.
+      :metadata (optional)   - Metadata for the object. See http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPOST.html
+                               for full details on which keys are supported. Keys and values can be strings or keywords.
+                               N.B. Keys not on that list will not be accepted. If you want to set arbitrary metadata,
+                               it needs to be prefixed with `x-amz-meta-*`.
    Sends the request to the server-url to be signed."
   [server-url edn-ize key-fn headers-fn input-map-or-file ch]
-  (let [xhr (XhrIo.)
-        {:keys [file identifier] :as input-map}
+  (let [xhr   (XhrIo.)
+        {:keys [file identifier metadata] :as input-map}
         (if (map? input-map-or-file)
           input-map-or-file
           {:file input-map-or-file})
-        fmap (file->map file)
-        _ (assert (some? (:type fmap)) "File must have a file type provided, it cannot be nil.")
-        fmap (cond
-               (:key input-map) (assoc fmap :name (:key input-map))
-               key-fn (update-in fmap [:name] key-fn)
-               :else fmap)]
+        fmap  (file->map file)
+        _     (assert (some? (:type fmap)) "File must have a file type provided, it cannot be nil.")
+        fmap  (cond
+                (:key input-map) (assoc fmap :name (:key input-map))
+                key-fn (update-in fmap [:name] key-fn)
+                :else fmap)
+        url (signing-url server-url (merge {:file-name (:name fmap) :mime-type (:type fmap)} metadata))]
     (events/listen xhr goog.net.EventType.SUCCESS
                    (fn [_]
-                     (put! ch {:f          file
-                               :signature  (edn-ize (.getResponseText xhr))
-                               :identifier identifier})
+                     (let [signing-response (edn-ize (.getResponseText xhr))]
+                       (put! ch {:f file
+                                 :upload-url (:upload-url signing-response)
+                                 :form-data (:form-data signing-response)
+                                 :identifier identifier}))
                      (close! ch)))
     (events/listen xhr goog.net.EventType.ERROR
                    (fn [_]
@@ -59,13 +68,16 @@
                                                        error-message)
                                  :http-error-code http-error-code})
                        (close! ch))))
-    (. xhr send (signing-url server-url (:name fmap) (:type fmap)) "GET" nil (clj->js (if (some? headers-fn)
-                                                                                        (headers-fn fmap)
-                                                                                        {})))))
+    (. xhr send url "GET" nil (clj->js (if (some? headers-fn)
+                                         (headers-fn fmap)
+                                         {})))))
 
-(defn formdata-from-map [m]
+(defn formdata-from-pairs
+  "Returns a formdata object with k-v pairs in coll assigned to it.
+  Ordering that you provide for the pairs is respected."
+  [coll]
   (let [fd (new js/FormData)]
-    (doseq [[k v] m]
+    (doseq [[k v] coll]
       (.append fd (name k) v))
     fd))
 
@@ -86,19 +98,18 @@
     :identifier - an identifier pass-through value for caller to identify the file with
   If the upload-info has an :error-code key because the signing failed, skips the xhr/send of the file,
   and simply replies with the error messages and codes from the failed upload-info sign attempt."
-  [upload-info ch]
+  [{:keys [f identifier form-data upload-url] :as upload-info} ch]
   (if (contains? upload-info :error-code)
     (do
       (put! ch upload-info)
       (close! ch))
     (let [xhr (XhrIo.)
-          identifier (:identifier upload-info)
-          sig-fields [:key :Content-Type :success_action_status :policy :AWSAccessKeyId :signature :acl]
-          signature (select-keys (:signature upload-info) sig-fields)
-          form-data (formdata-from-map (merge signature {:file (:f upload-info)}))]
+          ;; We turn the map into a sequence of tuples as the file needs to be
+          ;; the last field in the form, see http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPOST.html
+          form-data (formdata-from-pairs (concat (seq form-data) [[:file f]]))]
       (events/listen xhr goog.net.EventType.SUCCESS
                      (fn [_]
-                       (put! ch {:file       (:f upload-info)
+                       (put! ch {:file       f
                                  :response   (when-let [response-xml (.getResponseXml xhr)]
                                                (xml->map response-xml))
                                  :xhr        xhr
@@ -118,7 +129,7 @@
                                    :xhr             xhr
                                    :http-error-code http-error-code})
                          (close! ch))))
-      (. xhr send (:action (:signature upload-info)) "POST" form-data))))
+      (. xhr send upload-url "POST" form-data))))
 
 (defn s3-pipe
   "Takes a channel where completed uploads will be reported as a map and returns a channel where

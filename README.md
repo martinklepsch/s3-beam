@@ -83,6 +83,10 @@ If you choose to place a file map instead of a `File` object, you file map shoul
                            This will be included in the response channel.
 - `:key` (optional)        The file-name parameter that is sent to the signing server. If a `:key` key
                            exists in the input-map it will be used instead of the key-fn as an object-key.
+- `:metadata` (optional)   Metadata for the object. See [Amazon's API docs](http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPOST.html)
+                           for full details on which keys are supported. Keys and values can be strings or keywords.
+                           **N.B.** Keys not on that list will not be accepted. If you want to set arbitrary metadata,
+                           it needs to be prefixed with `x-amz-meta-*`.
 
 An example using it within an Om component:
 
@@ -132,6 +136,12 @@ Or, if an error occurs during upload processing, an error-map will be placed on 
 - `:http-error-code` The HTTP error code
 
 ## Changes
+
+#### Unreleased 0.?.?
+
+- Add support for assigning metadata to files when uploading them. See the file-map spec above for more details.
+- Tweak keys and parameters for communication between the client and server parts of the library. This is backwards and
+  forwards compatible between clients and servers running 0.5.2 and 0.?.?.
 
 #### 0.5.2
 
