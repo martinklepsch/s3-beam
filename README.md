@@ -221,6 +221,10 @@ Pull requests and issues are welcome. There are a few things I'd like to improve
 * **Upload progress:** XhrIo supports `PROGRESS` events and especially
   for larger uploads it'd be nice to have them
 
+## Maintainers
+
+Martin Klepsch
+Daniel Compton
 
 ## License
 
