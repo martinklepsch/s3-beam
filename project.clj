@@ -1,4 +1,4 @@
-(defproject org.martinklepsch/s3-beam "0.5.3-SNAPSHOT"
+(defproject org.martinklepsch/s3-beam "0.6.0-alpha1"
   :author "Martin Klepsch <http://www.martinklepsch.org>"
   :description "CORS Upload to S3 via Clojure(script)"
   :url "http://github.com/martinklepsch/s3-beam"
@@ -7,7 +7,7 @@
 
   :source-paths ["src/clj" "src/cljs"]
 
-  :dependencies [[org.clojure/clojure "1.6.0"]
+  :dependencies [[org.clojure/clojure "1.6.0" :scope "provided"]
                  [org.clojure/clojurescript "0.0-2371" :scope "provided"]
                  ;[com.google.javascript/closure-compiler "v20140814"]
                  [org.clojure/data.json "0.2.5"]

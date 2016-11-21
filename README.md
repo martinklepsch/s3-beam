@@ -5,7 +5,7 @@ from the browser to S3 (CORS upload).
 
 [](dependency)
 ```clojure
-[org.martinklepsch/s3-beam "0.5.2"] ;; latest release
+[org.martinklepsch/s3-beam "0.6.0-alpha1"] ;; latest release
 ```
 [](/dependency)
 
@@ -137,11 +137,13 @@ Or, if an error occurs during upload processing, an error-map will be placed on 
 
 ## Changes
 
-#### Unreleased 0.?.?
+#### Unreleased
 
-- Add support for assigning metadata to files when uploading them. See the file-map spec above for more details.
+#### 0.6.0-alpha1
+
+- Add support for assigning metadata to files when uploading them. See the file-map spec above for more details. [#37](https://github.com/martinklepsch/s3-beam/pull/37)
 - Tweak keys and parameters for communication between the client and server parts of the library. This is backwards and
-  forwards compatible between clients and servers running 0.5.2 and 0.?.?.
+  forwards compatible between clients and servers running 0.5.2 and 0.6.0-alpha1.
 
 #### 0.5.2
 
