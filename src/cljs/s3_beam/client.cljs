@@ -16,8 +16,12 @@
 
 (defn signing-url [server-url params]
   {:pre [(string? server-url) (string? (:file-name params)) (string? (:mime-type params))]}
-  (let [query-data (qd/createFromMap (clj->js params))]
-    (.. (Uri. server-url)
+  (let [uri (Uri. server-url)
+        original-query-data (.getQueryData uri)
+        query-data (qd/createFromMap (clj->js params))]
+    (doseq [k (.getKeys original-query-data)]           ;; Add any URL params that were present on the original server URL
+      (.set query-data k (.get original-query-data k)))
+    (.. uri
         (setQueryData query-data)
         (toString))))
 
