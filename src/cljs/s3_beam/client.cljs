@@ -96,16 +96,24 @@
 (defn upload-file
   "Take the signature information `upload-info`, and a response channel `ch`,
   and does the S3 upload.
-  Responds on the response channel with a map with:
+  Upon success it responds on the response channel with a map with:
+    :type - :success for success events
     :file - the File that was uploaded
     :response - a map of S3 metadata: :key, :location, :bucket, :etag
     :identifier - an identifier pass-through value for caller to identify the file with
   If the upload-info has an :error-code key because the signing failed, skips the xhr/send of the file,
-  and simply replies with the error messages and codes from the failed upload-info sign attempt."
-  [{:keys [f identifier form-data upload-url] :as upload-info} ch]
+  and simply replies with the error messages and codes from the failed upload-info sign attempt.
+  If progress-events are enabled, it responds on the response channel with a map with
+    :type - :progress
+    :file - the File that was uploaded
+    :bytes-sent - the size of the already uploaded potion in bytes
+    :bytes-total - the total file size in bytes
+    :identifier - an identifier pass-through value for caller to identify the file with"
+  [progress-events {:keys [f identifier form-data upload-url] :as upload-info} ch]
   (if (contains? upload-info :error-code)
     (do
-      (put! ch upload-info)
+      (put! ch (merge {:type :error}
+                      upload-info))
       (close! ch))
     (let [xhr (XhrIo.)
           ;; We turn the map into a sequence of tuples as the file needs to be
@@ -113,18 +121,30 @@
           form-data (formdata-from-pairs (concat (seq form-data) [[:file f]]))]
       (events/listen xhr goog.net.EventType.SUCCESS
                      (fn [_]
-                       (put! ch {:file       f
+                       (put! ch {:type       :success
+                                 :file       f
                                  :response   (when-let [response-xml (.getResponseXml xhr)]
                                                (xml->map response-xml))
                                  :xhr        xhr
                                  :identifier identifier})
                        (close! ch)))
+      (when progress-events
+        (.setProgressEventsEnabled xhr true)
+        (events/listen xhr goog.net.EventType.UPLOAD_PROGRESS
+                       (fn [event]
+                         (put! ch {:type        :progress
+                                   :file        f
+                                   :bytes-sent  (.-loaded event)
+                                   :bytes-total (.-total event)
+                                   :xhr         xhr
+                                   :identifier  identifier}))))
       (events/listen xhr goog.net.EventType.ERROR
                      (fn [_]
                        (let [error-code (.getLastErrorCode xhr)
                              error-message (.getDebugMessage goog.net.ErrorCode error-code)
                              http-error-code (.getStatus xhr)]
-                         (put! ch {:identifier      identifier
+                         (put! ch {:type            :error
+                                   :identifier      identifier
                                    :error-code      error-code
                                    :error-message   (str "While trying to upload file: "
                                                          error-message)
@@ -144,7 +164,8 @@
                        defaults to read-string.
     :key-fn          - a function used to generate the object key for the uploaded file on S3
                        defaults to nil, which means it will use the passed filename as the object key.
-    :headers-fn      - a function used to create the headers for the GET request to the signing server."
+    :headers-fn      - a function used to create the headers for the GET request to the signing server.
+    :progress-events - if true, progress events will be pushed on to channel during upload."
   ([report-chan] (s3-pipe report-chan {}))
   ([report-chan opts]
    (let [opts (merge {:server-url "/sign" :response-parser #(reader/read-string %)}
@@ -159,5 +180,9 @@
                               (:key-fn opts)
                               (:headers-fn opts))
                      to-process)
-     (pipeline-async 3 report-chan upload-file signed)
+     (pipeline-async 3
+                     report-chan
+                     (partial upload-file
+                              (:progress-events opts))
+                     signed)
      to-process)))
