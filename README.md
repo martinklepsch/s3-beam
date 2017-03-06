@@ -75,7 +75,7 @@ The full options map spec is:
 - `:headers-fn` a function used to create the headers for the GET request to the signing server.
                    The returned headers should be a Clojure map of header name Strings to corresponding
                    header value Strings.
-- `:progress-events` If set to true, it will push progress events to the channel during the transfer.
+- `:progress-events?` If set to true, it will push progress events to the channel during the transfer, false per default.
 
 If you choose to place a file map instead of a `File` object, you file map should follow:
 
@@ -138,7 +138,7 @@ Or, if an error occurs during upload processing, an error-map will be placed on 
 - `:error-message` The debug message from the error code
 - `:http-error-code` The HTTP error code
 
-If `:progress-events` are set to `true`, it will also forward those events from XhrIo:
+If `:progress-events?` are set to `true`, it will also forward those events from XhrIo:
 
 - `:type` `:progress`
 - `:file` The `File` object from the uploaded file

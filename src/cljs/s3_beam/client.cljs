@@ -109,11 +109,12 @@
     :bytes-sent - the size of the already uploaded potion in bytes
     :bytes-total - the total file size in bytes
     :identifier - an identifier pass-through value for caller to identify the file with"
-  [progress-events {:keys [f identifier form-data upload-url] :as upload-info} ch]
+  [{:keys [progress-events?] :as opts}
+   {:keys [f identifier form-data upload-url] :as upload-info}
+   ch]
   (if (contains? upload-info :error-code)
     (do
-      (put! ch (merge {:type :error}
-                      upload-info))
+      (put! ch (assoc upload-info :type :error))
       (close! ch))
     (let [xhr (XhrIo.)
           ;; We turn the map into a sequence of tuples as the file needs to be
@@ -128,7 +129,7 @@
                                  :xhr        xhr
                                  :identifier identifier})
                        (close! ch)))
-      (when progress-events
+      (when progress-events?
         (.setProgressEventsEnabled xhr true)
         (events/listen xhr goog.net.EventType.UPLOAD_PROGRESS
                        (fn [event]
@@ -159,13 +160,14 @@
   "Takes a channel where completed uploads will be reported as a map and returns a channel where
   you can put File objects, or input maps that should get uploaded. (see `upload-file` and `sign-file`)
   May also take an options map with:
-    :server-url      - the signing server url, defaults to \"/sign\"
-    :response-parser - a function to process the signing response from the signing server into EDN
-                       defaults to read-string.
-    :key-fn          - a function used to generate the object key for the uploaded file on S3
-                       defaults to nil, which means it will use the passed filename as the object key.
-    :headers-fn      - a function used to create the headers for the GET request to the signing server.
-    :progress-events - if true, progress events will be pushed on to channel during upload."
+    :server-url       - the signing server url, defaults to \"/sign\"
+    :response-parser  - a function to process the signing response from the signing server into EDN
+                        defaults to read-string.
+    :key-fn           - a function used to generate the object key for the uploaded file on S3
+                        defaults to nil, which means it will use the passed filename as the object key.
+    :headers-fn       - a function used to create the headers for the GET request to the signing server.
+    :progress-events? - if true, progress events will be pushed on to channel during upload
+                        defaults to false."
   ([report-chan] (s3-pipe report-chan {}))
   ([report-chan opts]
    (let [opts (merge {:server-url "/sign" :response-parser #(reader/read-string %)}
@@ -182,7 +184,6 @@
                      to-process)
      (pipeline-async 3
                      report-chan
-                     (partial upload-file
-                              (:progress-events opts))
+                     (partial upload-file (select-keys opts [:progress-events?]))
                      signed)
      to-process)))
