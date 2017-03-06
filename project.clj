@@ -1,4 +1,4 @@
-(defproject org.martinklepsch/s3-beam "0.6.0-alpha2"
+(defproject org.martinklepsch/s3-beam "0.6.0-alpha3"
   :author "Martin Klepsch <http://www.martinklepsch.org>"
   :description "CORS Upload to S3 via Clojure(script)"
   :url "http://github.com/martinklepsch/s3-beam"
