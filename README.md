@@ -75,6 +75,7 @@ The full options map spec is:
 - `:headers-fn` a function used to create the headers for the GET request to the signing server.
                    The returned headers should be a Clojure map of header name Strings to corresponding
                    header value Strings.
+- `:progress-events?` If set to true, it will push progress events to the channel during the transfer, false per default.
 
 If you choose to place a file map instead of a `File` object, you file map should follow:
 
@@ -119,6 +120,7 @@ An example using it within an Om component:
 
 The spec for the returned map (in the example above the returned map is `v`):
 
+- `:type` `:success`
 - `:file` The `File` object from the uploaded file
 - `:response` The upload response from S3 as a map with:
  - `:location` The S3 URL of the uploaded file
@@ -130,14 +132,26 @@ The spec for the returned map (in the example above the returned map is `v`):
 
 Or, if an error occurs during upload processing, an error-map will be placed on the response channel:
 
+- `:type` `:error`
 - `:identifier` A variable used to uniquely identify this file upload. This will be included in the response channel.
 - `:error-code` The error code from the XHR
 - `:error-message` The debug message from the error code
 - `:http-error-code` The HTTP error code
 
+If `:progress-events?` are set to `true`, it will also forward those events from XhrIo:
+
+- `:type` `:progress`
+- `:file` The `File` object from the uploaded file
+- `:bytes-sent` Bytes uploaded
+- `:bytes-total` Total file size in bytes
+- `:xhr` The `XhrIo` object used to POST to S3
+- `:identifier` A value used to uniquely identify the uploaded file
+
 ## Changes
 
 #### Unreleased
+
+- Add support for progress events.
 
 #### 0.6.0-alpha1
 
@@ -220,8 +234,6 @@ Pull requests and issues are welcome. There are a few things I'd like to improve
 
 * **Testing:** currently there are no tests
 * **Error handling:** what happens when the request fails?
-* **Upload progress:** XhrIo supports `PROGRESS` events and especially
-  for larger uploads it'd be nice to have them
 
 ## Maintainers
 

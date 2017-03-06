@@ -8,7 +8,7 @@
   :source-paths ["src/clj" "src/cljs"]
 
   :dependencies [[org.clojure/clojure "1.6.0" :scope "provided"]
-                 [org.clojure/clojurescript "0.0-2371" :scope "provided"]
+                 [org.clojure/clojurescript "1.7.170" :scope "provided"]
                  ;[com.google.javascript/closure-compiler "v20140814"]
                  [org.clojure/data.json "0.2.5"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
