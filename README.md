@@ -5,7 +5,7 @@ from the browser to S3 (CORS upload).
 
 [](dependency)
 ```clojure
-[org.martinklepsch/s3-beam "0.6.0-alpha1"] ;; latest release
+[org.martinklepsch/s3-beam "0.6.0-alpha3"] ;; latest release
 ```
 [](/dependency)
 
@@ -149,9 +149,9 @@ If `:progress-events?` are set to `true`, it will also forward those events from
 
 ## Changes
 
-#### Unreleased
+#### 0.6.0-alpha3
 
-- Add support for progress events.
+- Add support for progress events ([#40](https://github.com/martinklepsch/s3-beam/pull/40))
 
 #### 0.6.0-alpha1
 
