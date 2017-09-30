@@ -51,13 +51,16 @@
 
 (defn sign-upload [{:keys [file-name mime-type] :as metadata}
                    {:keys [bucket aws-zone aws-access-key aws-secret-key acl upload-url] :or {acl "public-read"}}]
-  (assert (zone->endpoint aws-zone) "No endpoint found for given AWS Zone")
+  (if-not upload-url
+    (assert (zone->endpoint aws-zone) "No endpoint found for given AWS Zone"))
   (assert aws-access-key "AWS Access Key cannot be nil")
   (assert aws-secret-key "AWS Secret Key cannot be nil")
   (assert acl "ACL cannot be nil")
   (assert mime-type "Mime-type cannot be nil.")
   (let [p (policy bucket metadata 60 acl)
-        action (or upload-url (str "https://" (zone->endpoint aws-zone) ".amazonaws.com/" bucket "/"))
+        action (or upload-url
+                   (str "https://" (zone->endpoint aws-zone)
+                        ".amazonaws.com/" bucket "/"))
         response {:action action
                   :upload-url action
                   :key file-name
