@@ -9,6 +9,8 @@ from the browser to S3 (CORS upload).
 ```
 [](/dependency)
 
+[![Dependencies Status](https://versions.deps.co/martinklepsch/s3-beam/status.svg)](https://versions.deps.co/martinklepsch/s3-beam)
+
 ## Usage
 
 To upload files directly to S3 you need to send special request
