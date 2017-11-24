@@ -1,7 +1,8 @@
 # s3-beam
 
 `s3-beam` is a Clojure/Clojurescript library designed to help you upload files
-from the browser to S3 (CORS upload).
+from the browser to S3 (CORS upload). `s3-beam` can also upload files from the browser
+to [DigitalOcean Spaces](https://www.digitalocean.com/products/object-storage/).
 
 [](dependency)
 ```clojure
@@ -30,6 +31,12 @@ For this reason this library consists of two parts:
 
 Please follow Amazon's [official documentation](http://docs.aws.amazon.com/AmazonS3/latest/dev/cors.html).
 
+For DigitalOcean Spaces, please follow DigitalOceans [official documentation](https://developers.digitalocean.com/documentation/spaces/#set-bucket-cors). Please note that currently (as of 2017-09-30), tool and library support is almost non-existent. For setting CORS you can use [this patched version of s3cmd](https://github.com/benhowell/s3cmd) like so:
+
+```s3cmd setcors FILE s3://BUCKET```
+
+Please configure `s3cmd` **first** by following the [offical instructions](https://www.digitalocean.com/community/tutorials/how-to-configure-s3cmd-2-x-to-manage-digitalocean-spaces), **but ensure you set** `Default Region` to `'nyc3'`. 
+
 ### 2. Plug-in the route to sign uploads
 
 ```clj
@@ -52,7 +59,7 @@ If you want to use a route different than `/sign`, define it in the
 handler, `(GET "/my-cool-route" ...)`, and then pass it in the options
 map to `s3-pipe` in the frontend.
 
-If you are serving your S3 bucket with CloudFront, or another CDN/proxy, you can pass
+If you are serving your S3 bucket from DigitalOcean Spaces, with CloudFront, or another CDN/proxy, you can pass
 `upload-url` as a fifth parameter to `s3-sign`, so that the ClojureScript client is directed
 to upload through this bucket. You still need to pass the bucket name, as the policy that is
 created and signed is based on the bucket name.
