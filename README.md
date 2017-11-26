@@ -29,15 +29,9 @@ For this reason this library consists of two parts:
 
 ### 1. Enable CORS on your S3 bucket
 
-Please follow Amazon's [official documentation](http://docs.aws.amazon.com/AmazonS3/latest/dev/cors.html).
+Please follow [Amazon's official documentation](http://docs.aws.amazon.com/AmazonS3/latest/dev/cors.html).
 
-For DigitalOcean Spaces, please follow DigitalOceans [official documentation](https://developers.digitalocean.com/documentation/spaces/#set-bucket-cors). Please note that currently (as of 2017-09-30), tool and library support is almost non-existent. For setting CORS you can use [this patched version of s3cmd](https://github.com/benhowell/s3cmd) like so:
-
-```
-s3cmd setcors FILE s3://BUCKET
-```
-
-Please configure `s3cmd` **first** by following the [offical instructions](https://www.digitalocean.com/community/tutorials/how-to-configure-s3cmd-2-x-to-manage-digitalocean-spaces), **but ensure you set** `Default Region` to `'nyc3'`.
+For DigitalOcean Spaces, please follow [DigitalOceans official documentation](https://developers.digitalocean.com/documentation/spaces/#set-bucket-cors).
 
 ### 2. Plug-in the route to sign uploads
 
