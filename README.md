@@ -1,6 +1,7 @@
 # s3-beam [![Dependencies Status](https://versions.deps.co/martinklepsch/s3-beam/status.svg)](https://versions.deps.co/martinklepsch/s3-beam)
 
 [Usage](#usage) | [Changes](#changes)
+
 `s3-beam` is a Clojure/Clojurescript library designed to help you upload files
 from the browser to S3 (CORS upload). `s3-beam` can also upload files from the browser
 to [DigitalOcean Spaces](https://www.digitalocean.com/products/object-storage/).
