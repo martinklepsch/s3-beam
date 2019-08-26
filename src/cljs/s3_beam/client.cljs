@@ -6,8 +6,7 @@
             [goog.events :as events]
             [goog.Uri.QueryData :as qd])
   (:import [goog Uri]
-           [goog.net XhrIo EventType ErrorCode]
-           [goog.events EventType]))
+           [goog.net XhrIo EventType ErrorCode]))
 
 (defn file->map [f]
   {:name (.-name f)
