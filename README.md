@@ -8,7 +8,7 @@ to [DigitalOcean Spaces](https://www.digitalocean.com/products/object-storage/).
 
 [](dependency)
 ```clojure
-[org.martinklepsch/s3-beam "0.6.0-alpha4"] ;; latest release
+[org.martinklepsch/s3-beam "0.6.0-alpha5"] ;; latest release
 ```
 [](/dependency)
 
@@ -153,6 +153,11 @@ If `:progress-events?` are set to `true`, it will also forward those events from
 - `:identifier` A value used to uniquely identify the uploaded file
 
 ## Changes
+
+#### 0.6.0-alpha5
+
+- Fix compilation issues with shadow-cljs ([#47](https://github.com/martinklepsch/s3-beam/pull/47))
+- Upgrade dependencies ([#48](https://github.com/martinklepsch/s3-beam/pull/48))
 
 #### 0.6.0-alpha4
 
