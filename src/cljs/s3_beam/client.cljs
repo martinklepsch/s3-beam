@@ -71,6 +71,7 @@
                                                        error-message)
                                  :http-error-code http-error-code})
                        (close! ch))))
+    (. xhr setWithCredentials true) ;; send cookies with the request in case the server sign function uses cookie-based authentication
     (. xhr send url "GET" nil (clj->js (if (some? headers-fn)
                                          (headers-fn fmap)
                                          {})))))
